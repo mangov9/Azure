@@ -1,0 +1,62 @@
+export I_MPI_FABRIC=shm:ofa (HC)
+export I_MPI_DEBUG=5
+source  /opt/intel/compilers_and_libraries_2018.5.274/linux/bin/compilervars.sh intel64
+source  /opt/intel/compilers_and_libraries_2018.5.274/linux/mpi/intel64/bin/mpivars.sh
+mpirun -genvall -host IP1,IP2 -perhost 1 -np 2 -r ssh /opt/intel/compilers_and_libraries_2018.5.274/linux/mpi/intel64/bin/IMB-MPI1 biband
+
+                                       or
+source /opt/intel/compilers_and_libraries_2016/linux/mpi/intel64/bin/mpivars.sh (H16, N)
+export I_MPI_FABRICS=shm:dapl 
+export I_MPI_DAPL_PROVIDER=ofa-v2-ib0 
+export I_MPI_DYNAMIC_CONNECTION=0
+mpirun -genvall -host IP1,IP2 -perhost 1 -np 2 -r ssh /opt/intel/compilers_and_libraries_2018.5.274/linux/mpi/intel64/bin/IMB-MPI1 biband
+
+                                       or
+source /opt/intel/compilers_and_libraries_2016/linux/mpi/intel64/bin/mpivars.sh (HB)
+mpirun -genvall -host IP1,IP2 -perhost 1 -np 2 -r ssh /opt/intel/compilers_and_libraries_2018.5.274/linux/mpi/intel64/bin/IMB-MPI1 biband
+
+                                       or
+                                      
+Here is the script(NC): manasa@test ~]$ cat hosts 
+10.x.x.x
+10.x.x.x
+[manasa@test ~]$ cat pingpong.sh
+#!/bin/bash
+# Example usage: ./full-pingpong.sh | grep -e ' 512 ' -e NODES -e usec
+ 
+declare -A matrix
+mpiversion=`ls /opt/intel/impi/`
+source /opt/intel/impi/$mpiversion/bin64/mpivars.sh
+for NODE in `cat ~/hosts`; \
+    do for NODE2 in `cat ~/hosts`; \
+        do matrix[$NODE,$NODE2]=`/opt/intel/impi/$mpiversion/bin64/mpirun \
+            -hosts $NODE,$NODE2 -ppn 1 -n 2 \
+            -env I_MPI_FABRICS=shm:dapl \
+            -env I_MPI_DAPL_PROVIDER=ofa-v2-ib0 \
+            -env I_MPI_DYNAMIC_CONNECTION=0 /opt/intel/impi/$mpiversion/bin64/IMB-MPI1 pingpong \
+            | grep -e ' 512 ' |  awk '{ print $3 }'` && \
+            echo '##################################################' && \
+            echo NODES: $NODE, $NODE2, ${matrix[$NODE,$NODE2]} && \
+            echo '##################################################'; \
+        done; \
+    done
+ 
+ 
+f1="%$((${#num_rows}+1))s"
+f2=" %9s"
+ 
+printf "$f1" ' '
+for NODE in `cat ~/hosts`;\
+    do printf "$f2" $NODE
+done
+echo
+ 
+for NODE in `cat ~/hosts`; \
+    do printf $f1 $NODE
+    for NODE2 in `cat ~/hosts`; \
+        do printf "$f2" ${matrix[$NODE,$NODE2]}
+    done
+    echo
+done
+[manasa@test ~]$ ./pingpong.sh
+
