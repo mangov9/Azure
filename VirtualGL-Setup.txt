@@ -1,0 +1,23 @@
+1.      Create an NVxx VM and install NVIDIA Grid driver (either using extension or manually)
+2.      Modify /etc/X11/xorg.conf as below:
+                 a)      run nvidia-xconfig --query-gpu-info command
+           b)    Copy the BusID
+           c)   Open xorg.conf and search for “Device” Section
+          d)     Enter the BusID. An example Device section follows.
+  Section "Device"
+  Identifier     "nvidia"
+  Driver         "nvidia"
+  VendorName     "NVIDIA Corporation"
+  BusID "PCI:0@1:0:0"
+  EndSection
+3.      Reboot the VM, I.e sudo reboot
+4.     Stop gdm3 service, sudo systemctl stop gdm3
+5.      In order to configure the virtualgl, please download the 64 bit virtualgl package from here https://sourceforge.net/projects/virtualgl/files/2.6.3/virtualgl_2.6.3_amd64.deb/download
+6.  Copy the downloaded package to the VM and run the following commands from the VM:
+dpkg -i virtualgl*.deb
+apt install -f
+7.  Run the command in order to configure the vglserver:  /opt/VirtualGL/bin/vglserver_config and you can follow the link to configure this https://cdn.rawgit.com/VirtualGL/virtualgl/2.6.3/doc/index.html#hd005001
+8.  Start the gdm3 service, sudo systemctl start gdm3
+9.   In order to do the sanity check on whether it’s using NVIDIA OpenGL runtime, you can run this command: /opt/VirtualGL/bin/glxinfo -display :0 -c
+10.  We noticed the DISPLAY variable is set to :10 when I connect via SSH by default but VirtualGL runs on display :0. So, in order to set that please run this command from the VM env DISPLAY=:0
+11.   Now, we can setup the xrdp for the remote desktop and if you want to run any application including the chromium browser you’ll need to run vglrun -d :0 applicationname (Ex: vglrun -d :0 chromium-browser and then run fishgl.com in the browser,vglrun -d :0 glxgerars)
