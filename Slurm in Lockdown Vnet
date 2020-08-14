@@ -1,0 +1,20 @@
+The only outbound traffic required for the cluster to work is access to the CentOS mirrors which sit behind an Azure traffic manager. There are two options for enabling that access in a locked down environment: 1) Create a custom image with /etc/yum.conf pointing to a proxy server for the network, or 2) Create an application firewall rule on the VNET allowing outbound access to the URL of the yum repo (http://olcentgbl.trafficmanager.net/)
+ 
+Option #1: Custom image
+1.	Launch a VM in Azure using the CentOS 7.6 HPC image as a starting point
+2.	Edit /etc/yum.conf and add the line:
+ 
+proxy=http://<Proxy-Server-IP-Address>:<Proxy_Port>
+proxy_username=<Proxy-User-Name>
+proxy_password=<Proxy-Password> 
+ 
+3.	Generalize the VM with the command
+ 
+sudo waagent -deprovision+user
+ 
+4.	Capture the VM image using the Capture button in the Azure portal, making note of the resulting image URN
+5.	Edit the cluster to use a custom image on the 'Advanced Settings' tab of the cluster creation team to point to the custom image
+ 
+Option #2: Application firewall
+ 
+1.	Follow the instructions at https://docs.microsoft.com/en-us/azure/firewall/tutorial-firewall-deploy-portal to deploy a Firewall allowing outbound access to http://olcentgbl.trafficmanager.net/
